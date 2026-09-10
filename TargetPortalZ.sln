@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TargetPortal", "TargetPortal\TargetPortal.csproj", "{150BFDAF-FF35-4302-B7CC-BEDCE69118D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TargetPortalZ", "TargetPortal\TargetPortal.csproj", "{150BFDAF-FF35-4302-B7CC-BEDCE69118D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
