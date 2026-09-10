@@ -21,7 +21,7 @@ namespace TargetPortal;
 public class TargetPortal : BaseUnityPlugin
 {
 	private const string ModName = "TargetPortalZ";
-	private const string ModVersion = "1.0.0";
+	private const string ModVersion = "1.0.1";
 	private const string ModGUID = "com.jamesrpoirier.targetportalz";
 
 	public static HashSet<ZDO> knownPortals = new();
@@ -172,14 +172,19 @@ public class TargetPortal : BaseUnityPlugin
 	{
 		private static readonly MethodInfo PortalGetter = AccessTools.DeclaredMethod(typeof(ZDOMan), nameof(ZDOMan.GetPortals));
 
-		private static List<ZDO> FilterPortals(List<ZDO> portals)
+		private static Dictionary<ZoneSystem.SectorIndex, List<ZDO>> FilterPortals(Dictionary<ZoneSystem.SectorIndex, List<ZDO>> portals)
 		{
-			List<ZDO> filtered = new();
-			if (limitToVanillaPortals.Value == Toggle.On)
+			if (limitToVanillaPortals.Value == Toggle.Off)
 			{
-				filtered.AddRange(portals.Where(z => !vanillaPortalPrefabs.Contains(z.m_prefab)));
+				return new Dictionary<ZoneSystem.SectorIndex, List<ZDO>>();
 			}
-			return filtered;
+
+			return portals
+				.Select(pair => new KeyValuePair<ZoneSystem.SectorIndex, List<ZDO>>(
+					pair.Key,
+					pair.Value.Where(zdo => !vanillaPortalPrefabs.Contains(zdo.m_prefab)).ToList()))
+				.Where(pair => pair.Value.Count > 0)
+				.ToDictionary(pair => pair.Key, pair => pair.Value);
 		}
 
 		private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -352,7 +357,9 @@ public class TargetPortal : BaseUnityPlugin
 	{
 		private static bool Prefix(Player __instance)
 		{
-			if (maximumNumberOfPortals.Value > 0 && knownPortals.Count >= maximumNumberOfPortals.Value)
+			GameObject selectedPrefab = __instance.m_buildPieces.GetSelectedPrefab();
+			bool placingPortal = selectedPrefab != null && selectedPrefab.GetComponent<TeleportWorld>() != null;
+			if (placingPortal && maximumNumberOfPortals.Value > 0 && knownPortals.Count >= maximumNumberOfPortals.Value)
 			{
 				__instance.Message(MessageHud.MessageType.Center, $"You cannot place more than {maximumNumberOfPortals.Value} portals in this world.");
 				return false;

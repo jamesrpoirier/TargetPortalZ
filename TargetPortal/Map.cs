@@ -20,7 +20,7 @@ public static class Map
 	private static readonly Dictionary<Minimap.PinData, ZDO> activePins = new();
 	private static bool shouldPortalsBeVisible = false;
 	private static bool[]? visibleIconTypes;
-	private static GameObject favoriteList = null!;
+	private static GameObject portalListPanel = null!;
 
 	[HarmonyPatch(typeof(TeleportWorldTrigger), nameof(TeleportWorldTrigger.OnTriggerEnter))]
 	private class OpenMapOnPortalEnter
@@ -215,28 +215,6 @@ public static class Map
 		}
 	}
 
-	private static void ToggleFavoritePortal(ZDO portalZDO)
-	{
-		string portalIdentifier = portalZDO.GetPosition().ToString();
-		if (Player.m_localPlayer.m_customData.TryGetValue("TargetPortal Favorites", out string portals))
-		{
-			List<string> portalList = portals.Split('|').ToList();
-
-			if (!portalList.Remove(portalIdentifier))
-			{
-				portalList.Add(portalIdentifier);
-			}
-
-			Player.m_localPlayer.m_customData["TargetPortal Favorites"] = string.Join("|", portalList);
-		}
-		else
-		{
-			Player.m_localPlayer.m_customData.Add("TargetPortal Favorites", portalIdentifier);
-		}
-		
-		FillFavorites();
-	}
-
 	[HarmonyPatch]
 	private class MapAlternativeClick
 	{
@@ -274,11 +252,11 @@ public static class Map
 	}
 
 	[HarmonyPatch(typeof(Minimap), nameof(Minimap.Awake))]
-	private static class AddFavoritePins
+	private static class AddPortalList
 	{
 		private static void Postfix(Minimap __instance)
 		{
-			favoriteList = new GameObject("TargetPortal Favorites")
+			portalListPanel = new GameObject("TargetPortalZ Portal List")
 			{
 				transform =
 				{
@@ -286,53 +264,53 @@ public static class Map
 				},
 			};
 
-			RectTransform rect = favoriteList.AddComponent<RectTransform>();
+			RectTransform rect = portalListPanel.AddComponent<RectTransform>();
 			rect.anchorMin = new Vector2(0, 0.5f);
 			rect.anchorMax = new Vector2(0, 0.5f);
 			rect.anchoredPosition = new Vector2(15, 0);
 			rect.sizeDelta = new Vector2(200, 500);
 			rect.pivot = new Vector2(0, 0.5f);
-			favoriteList.AddComponent<VerticalLayoutGroup>().childForceExpandHeight = false;
+			portalListPanel.AddComponent<VerticalLayoutGroup>().childForceExpandHeight = false;
 		}
 	}
 
-	private static void ClearFavorites()
+	private static void ClearPortalList()
 	{
-		if (favoriteList == null)
+		if (portalListPanel == null)
 		{
 			return;
 		}
 
-		for (int i = 0; i < favoriteList.transform.childCount; ++i)
+		for (int i = 0; i < portalListPanel.transform.childCount; ++i)
 		{
-			Object.Destroy(favoriteList.transform.GetChild(i).gameObject);
+			Object.Destroy(portalListPanel.transform.GetChild(i).gameObject);
 		}
 	}
 
-	private static void FillFavorites()
+	private static void FillPortalList()
 	{
-		ClearFavorites();
+		ClearPortalList();
 		
-		if (favoriteList == null)
+		if (portalListPanel == null)
 		{
 			return;
 		}
 
 		foreach (Minimap.PinData pin in activePins.Keys.OrderBy(pin => pin.m_name))
 		{
-			GameObject favoriteEntry = Object.Instantiate(Minimap.instance.m_largeRoot.transform.Find("KeyHints/keyboard_hints/AddPin").gameObject, favoriteList.transform);
-			favoriteEntry.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
-			Transform label = favoriteEntry.transform.Find("Label");
+			GameObject portalEntry = Object.Instantiate(Minimap.instance.m_largeRoot.transform.Find("KeyHints/keyboard_hints/AddPin").gameObject, portalListPanel.transform);
+			portalEntry.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
+			Transform label = portalEntry.transform.Find("Label");
 			label.SetAsLastSibling();
 			label.GetComponent<TextMeshProUGUI>().text = string.IsNullOrWhiteSpace(pin.m_name) ? "(unnamed portal)" : pin.m_name;
 			label.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
-			Image portalIcon = favoriteEntry.transform.Find("keyboard_hint").GetComponent<Image>();
+			Image portalIcon = portalEntry.transform.Find("keyboard_hint").GetComponent<Image>();
 			portalIcon.sprite = pin.m_icon;
-			portalIcon.gameObject.AddComponent<FavoriteClicked>().Pin = pin;
+			portalEntry.AddComponent<PortalListEntry>().Pin = pin;
 		}
 	}
 
-	private class FavoriteClicked : MonoBehaviour, IPointerClickHandler
+	private class PortalListEntry : MonoBehaviour, IPointerClickHandler
 	{
 		public Minimap.PinData Pin = null!;
 
@@ -345,13 +323,6 @@ public static class Map
 					pin = Pin;
 					return activePins.TryGetValue(pin, out zdo);
 				});
-			}
-			else if (pointerEventData.button == PointerEventData.InputButton.Right)
-			{
-				if (activePins.TryGetValue(Pin, out ZDO zdo))
-				{
-					ToggleFavoritePortal(zdo);
-				}
 			}
 		}
 	}
@@ -418,7 +389,7 @@ public static class Map
 
 		if (changedPins)
 		{
-			FillFavorites();
+			FillPortalList();
 		}
 	}
 
@@ -430,6 +401,6 @@ public static class Map
 		}
 		activePins.Clear();
 		
-		ClearFavorites();
+		ClearPortalList();
 	}
 }

@@ -17,9 +17,11 @@ public static class Helper
 	private static Texture2D loadTexture(string name)
 	{
 		Texture2D texture = new(0, 0);
-		Type imageConversion = Type.GetType("UnityEngine.ImageConversion, UnityEngine.ImageConversionModule");
-		MethodInfo loadImage = imageConversion?.GetMethod("LoadImage", new[] { typeof(Texture2D), typeof(byte[]) });
-		loadImage?.Invoke(null, new object[] { texture, ReadEmbeddedFileBytes(name) });
+		Type imageConversion = Type.GetType("UnityEngine.ImageConversion, UnityEngine.ImageConversionModule")
+			?? throw new InvalidOperationException("Unity image conversion module is unavailable.");
+		MethodInfo loadImage = imageConversion.GetMethod("LoadImage", new[] { typeof(Texture2D), typeof(byte[]) })
+			?? throw new MissingMethodException("UnityEngine.ImageConversion.LoadImage(Texture2D, byte[])");
+		loadImage.Invoke(null, new object[] { texture, ReadEmbeddedFileBytes(name) });
 		return texture;
 	}
 
