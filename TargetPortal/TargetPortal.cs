@@ -20,9 +20,9 @@ namespace TargetPortal;
 [BepInDependency("org.bepinex.plugins.guilds", BepInDependency.DependencyFlags.SoftDependency)]
 public class TargetPortal : BaseUnityPlugin
 {
-	private const string ModName = "TargetPortal";
-	private const string ModVersion = "1.2.5";
-	private const string ModGUID = "org.bepinex.plugins.targetportal";
+	private const string ModName = "TargetPortalZ";
+	private const string ModVersion = "1.0.0";
+	private const string ModGUID = "com.jamesrpoirier.targetportalz";
 
 	public static HashSet<ZDO> knownPortals = new();
 	public static Sprite portalIcon = null!;
@@ -38,6 +38,7 @@ public class TargetPortal : BaseUnityPlugin
 	private static ConfigEntry<int> portalNameLength = null!;
 	private static ConfigEntry<int> maximumNumberOfPortals = null!;
 	public static ConfigEntry<IgnoreItems> ignoreItemsTeleport = null!;
+	public static ConfigEntry<Toggle> fastTeleportAnimation = null!;
 	private static ConfigEntry<KeyboardShortcut> portalModeToggleModifierKey = null!;
 	public static ConfigEntry<KeyboardShortcut> mapPortalIconKey = null!;
 	private static ConfigEntry<PortalMode> defaultPortalMode = null!;
@@ -90,7 +91,8 @@ public class TargetPortal : BaseUnityPlugin
 		mapPortalIconKey = config("1 - General", "Hotkey map icons", new KeyboardShortcut(KeyCode.P), "Hotkey to press while the map is open to toggle portal icons.", false);
 		portalNameLength = config("1 - General", "Maximum length for portal names", 10, new ConfigDescription("Maximum length for portal names.", new AcceptableValueRange<int>(5, 100)));
 		maximumNumberOfPortals = config("1 - General", "Maximum number of portals", 0, new ConfigDescription("Sets the maximum number of portals allowed in the world. Use 0 for no limit."));
-		ignoreItemsTeleport = config("1 - General", "Ignore item teleport restrictions", IgnoreItems.Default, new ConfigDescription("Never: Do not allow teleportation of restricted items.\nDefault: Keep vanilla behavior for portals.\nAlways: Ignore item restrictions on portals."));
+		ignoreItemsTeleport = config("1 - General", "Ignore item teleport restrictions", IgnoreItems.Always, new ConfigDescription("Never: Do not allow teleportation of restricted items.\nDefault: Keep vanilla behavior for portals.\nAlways: Ignore item restrictions on portals."));
+		fastTeleportAnimation = config("1 - General", "Fast teleport animation", Toggle.On, "Use the short local teleport transition for map-selected portals.", false);
 		defaultPortalMode = config("1 - General", "Default Portal mode", PortalMode.Private, new ConfigDescription("Sets the default mode for newly built portals."), false);
 		allowIconToggleWithoutMap = config("1 - General", "Allow Icon toggle map closed", Toggle.Off, new ConfigDescription("If on, the portal icons can be toggled on and off with the hotkey, even if the map is not opened."), false);
 
@@ -147,7 +149,7 @@ public class TargetPortal : BaseUnityPlugin
 	{
 		while (true)
 		{
-			List<ZDO> portalList = ZDOMan.instance.GetPortals();
+			List<ZDO> portalList = ZDOMan.instance.GetPortals().Values.SelectMany(portals => portals).ToList();
 			HashSet<ZDO> foundPortals = limitToVanillaPortals.Value == Toggle.On ? new HashSet<ZDO>(portalList.Where(z => vanillaPortalPrefabs.Contains(z.m_prefab))) : new HashSet<ZDO>(portalList);
 
 			if (ZNet.instance.IsServer())

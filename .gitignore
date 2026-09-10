@@ -4,3 +4,6 @@ obj
 TargetPortal.sln.DotSettings.user
 .idea
 .vs
+.tools/
+build/
+publicized_assemblies/

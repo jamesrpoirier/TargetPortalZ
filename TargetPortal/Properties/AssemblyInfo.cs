@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TargetPortal")]
-[assembly: AssemblyDescription("https://valheim.thunderstore.io/package/Smoothbrain/TargetPortal")]
+[assembly: AssemblyTitle("TargetPortalZ")]
+[assembly: AssemblyDescription("Valheim 1.0 map-based portal selection compatibility fork")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("TargetPortal")]
-[assembly: AssemblyCopyright("Copyright ©  2022")]
+[assembly: AssemblyCompany("James R. Poirier")]
+[assembly: AssemblyProduct("TargetPortalZ")]
+[assembly: AssemblyCopyright("Copyright © 2026 James R. Poirier; based on TargetPortal by Smoothbrain")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -125,7 +125,7 @@ public static class Map
 			return true;
 		}
 
-		if (TargetPortal.ignoreItemsTeleport.Value != TargetPortal.IgnoreItems.Always && (TargetPortal.ignoreItemsTeleport.Value == TargetPortal.IgnoreItems.Never || !PortalAllowsAllItems) && !Player.m_localPlayer.IsTeleportable())
+		if (TargetPortal.ignoreItemsTeleport.Value != TargetPortal.IgnoreItems.Always && (TargetPortal.ignoreItemsTeleport.Value == TargetPortal.IgnoreItems.Never || !PortalAllowsAllItems) && !Player.m_localPlayer.IsTeleportable(false))
 		{
 			Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_noteleport");
 			return false;
@@ -141,7 +141,8 @@ public static class Map
 		Minimap.instance.SetMapMode(Minimap.MapMode.Small);
 		CancelTeleport();
 
-		Player.m_localPlayer.TeleportTo(closestPin!.m_pos + rotation * Vector3.forward + Vector3.up, rotation, true);
+		bool useDistantTeleport = TargetPortal.fastTeleportAnimation.Value != TargetPortal.Toggle.On;
+		Player.m_localPlayer.TeleportTo(closestPin!.m_pos + rotation * Vector3.forward + Vector3.up, rotation, useDistantTeleport);
 		return false;
 	}
 
@@ -214,19 +215,6 @@ public static class Map
 		}
 	}
 
-	[HarmonyPatch(typeof(Minimap), nameof(Minimap.OnMapRightClick))]
-	private class MapRightClick
-	{
-		private static void Prefix()
-		{
-			if (!GetClosestPortal(out _, out ZDO? portalZDO))
-			{
-				return;
-			}
-			ToggleFavoritePortal(portalZDO!);
-		}
-	}
-
 	private static void ToggleFavoritePortal(ZDO portalZDO)
 	{
 		string portalIdentifier = portalZDO.GetPosition().ToString();
@@ -255,7 +243,6 @@ public static class Map
 		private static IEnumerable<MethodInfo> TargetMethods() => new[]
 		{
 			AccessTools.DeclaredMethod(typeof(Minimap), nameof(Minimap.OnMapDblClick)),
-			AccessTools.DeclaredMethod(typeof(Minimap), nameof(Minimap.OnMapRightClick)),
 			AccessTools.DeclaredMethod(typeof(Minimap), nameof(Minimap.OnMapMiddleClick)),
 		};
 
@@ -311,6 +298,11 @@ public static class Map
 
 	private static void ClearFavorites()
 	{
+		if (favoriteList == null)
+		{
+			return;
+		}
+
 		for (int i = 0; i < favoriteList.transform.childCount; ++i)
 		{
 			Object.Destroy(favoriteList.transform.GetChild(i).gameObject);
@@ -321,27 +313,22 @@ public static class Map
 	{
 		ClearFavorites();
 		
-		if (Player.m_localPlayer.m_customData.TryGetValue("TargetPortal Favorites", out string portals))
+		if (favoriteList == null)
 		{
-			Dictionary<string, Minimap.PinData> pins = activePins.ToDictionary(p => p.Value.m_position.ToString(), p => p.Key);
+			return;
+		}
 
-			List<string> portalList = portals.Split('|').ToList();
-
-			foreach (string portal in portalList)
-			{
-				if (pins.TryGetValue(portal, out Minimap.PinData pin))
-				{
-					GameObject favoriteEntry = Object.Instantiate(Minimap.instance.m_largeRoot.transform.Find("KeyHints/keyboard_hints/AddPin").gameObject, favoriteList.transform);
-					favoriteEntry.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
-					Transform label = favoriteEntry.transform.Find("Label");
-					label.SetAsLastSibling();
-					label.GetComponent<TextMeshProUGUI>().text = pin.m_name;
-					label.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
-					Image portalIcon = favoriteEntry.transform.Find("keyboard_hint").GetComponent<Image>();
-					portalIcon.sprite = pin.m_icon;
-					portalIcon.gameObject.AddComponent<FavoriteClicked>().Pin = pin;
-				}
-			}
+		foreach (Minimap.PinData pin in activePins.Keys.OrderBy(pin => pin.m_name))
+		{
+			GameObject favoriteEntry = Object.Instantiate(Minimap.instance.m_largeRoot.transform.Find("KeyHints/keyboard_hints/AddPin").gameObject, favoriteList.transform);
+			favoriteEntry.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
+			Transform label = favoriteEntry.transform.Find("Label");
+			label.SetAsLastSibling();
+			label.GetComponent<TextMeshProUGUI>().text = string.IsNullOrWhiteSpace(pin.m_name) ? "(unnamed portal)" : pin.m_name;
+			label.GetComponent<RectTransform>().pivot = new Vector2(0, 0.5f);
+			Image portalIcon = favoriteEntry.transform.Find("keyboard_hint").GetComponent<Image>();
+			portalIcon.sprite = pin.m_icon;
+			portalIcon.gameObject.AddComponent<FavoriteClicked>().Pin = pin;
 		}
 	}
 
