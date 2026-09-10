@@ -14,7 +14,7 @@ TargetPortalZ is a Valheim 1.0 compatibility fork of Smoothbrain's TargetPortal.
 
 Place `TargetPortalZ.dll` in the selected profile's `BepInEx/plugins` directory and launch Valheim modded. Configuration is written to `BepInEx/config/com.jamesrpoirier.targetportalz.cfg`.
 
-The mod is currently tested locally against Valheim 1.0. It has not yet been packaged or published on Thunderstore.
+The mod is tested locally against Valheim 1.0 and includes Thunderstore package metadata under `thunderstore/`.
 
 ## Attribution
 

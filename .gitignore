@@ -6,3 +6,4 @@ obj
 .tools/
 build/
 publicized_assemblies/
+dist/

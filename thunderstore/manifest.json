@@ -1,0 +1,9 @@
+{
+  "name": "TargetPortalZ",
+  "version_number": "1.0.1",
+  "website_url": "https://github.com/jamesrpoirier/TargetPortalZ",
+  "description": "Select any discovered Valheim portal from the map or named portal list, with configurable unrestricted items and a fast teleport transition.",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2333"
+  ]
+}
